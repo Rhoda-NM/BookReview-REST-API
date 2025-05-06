@@ -2,14 +2,40 @@ from flask_restful import Resource
 from flask import request
 from app.models import Book, User
 from app import db
+from app.schemas.book_schema import book_schema, book_list_schema
+from app.utils import success_response, error_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils import error_response, success_response
 
 
 class BookListResource(Resource):
     def get(self):
-        books = Book.query.all()
-        return [book.to_dict() for book in books], 200
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        genre = request.args.get('genre', type=str)
+        author = request.args.get('author', type=str)
+        sort_by = request.args.get('sort_by', 'created_at')
+        sort_dir = request.args.get('sort_dir', 'desc')
+
+        query = Book.query
+
+        if genre:
+            query = query.filter(Book.genre.ilike(f"%{genre}%"))
+        if author:
+            query = query.filter(Book.author.ilike(f"%{author}%"))
+        if hasattr(Book, sort_by):
+            sort_attr = getattr(Book, sort_by)
+            query = query.order_by(sort_attr.desc() if sort_dir == 'desc' else sort_attr.asc())
+
+        paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        return success_response({
+            "books": book_list_schema.dump(paginated.items),
+            "total": paginated.total,
+            "page": paginated.page,
+            "pages": paginated.pages,
+            "per_page": paginated.per_page
+        })
 
     @jwt_required()
     def post(self):
@@ -22,7 +48,7 @@ class BookListResource(Resource):
         book = Book(**data)
         db.session.add(book)
         db.session.commit()
-        return book.to_dict(), 201
+        return success_response(book.to_dict(), "Book created successfully", 201)
 
 
 class BookResource(Resource):
