@@ -2,6 +2,7 @@ from flask_restful import Resource
 from flask import request
 from app import db
 from app.models import Review, Book, User
+from app.utils import error_response, success_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 class ReviewListResource(Resource):
@@ -14,7 +15,7 @@ class ReviewListResource(Resource):
         user_id = get_jwt_identity()
         existing = Review.query.filter_by(user_id=user_id, book_id=book_id).first()
         if existing:
-            return {"error": "You already reviewed this book"}, 400
+            return error_response("You've already reviewed this book", 400)
 
         data = request.get_json()
         review = Review(
@@ -34,7 +35,7 @@ class ReviewResource(Resource):
         user = User.query.get(get_jwt_identity())
         review = Review.query.get_or_404(review_id)
         if review.user_id != user.id and not user.is_admin:
-            return {"error": "Unauthorized"}, 403
+            return error_response("Unauthorized", 403)
 
         data = request.get_json()
         review.rating = data.get("rating", review.rating)
@@ -47,7 +48,7 @@ class ReviewResource(Resource):
         user = User.query.get(get_jwt_identity())
         review = Review.query.get_or_404(review_id)
         if review.user_id != user.id and not user.is_admin:
-            return {"error": "Unauthorized"}, 403
+            return error_response("Unauthorized", 403)
 
         db.session.delete(review)
         db.session.commit()
