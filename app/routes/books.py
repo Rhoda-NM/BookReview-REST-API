@@ -17,6 +17,7 @@ class BookListResource(Resource):
         author = request.args.get('author', type=str)
         sort_by = request.args.get('sort_by', 'created_at')
         sort_dir = request.args.get('sort_dir', 'desc')
+        search_query = request.args.get('q', type=str)
 
         query = Book.query
 
@@ -24,6 +25,14 @@ class BookListResource(Resource):
             query = query.filter(Book.genre.ilike(f"%{genre}%"))
         if author:
             query = query.filter(Book.author.ilike(f"%{author}%"))
+        if search_query:
+            query = query.filter(
+                db.or_(
+                    Book.title.ilike(f"%{search_query}%"),
+                    Book.description.ilike(f"%{search_query}%"),
+                    Book.author.ilike(f"%{search_query}%")
+                )
+            )
         if hasattr(Book, sort_by):
             sort_attr = getattr(Book, sort_by)
             query = query.order_by(sort_attr.desc() if sort_dir == 'desc' else sort_attr.asc())
