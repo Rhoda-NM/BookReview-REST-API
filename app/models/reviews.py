@@ -13,8 +13,9 @@ class Review(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    user = db.relationship('User', backref='reviews')
-    book = db.relationship('Book', backref='reviews')
+    user = db.relationship("User", back_populates="reviews")
+
+    book = db.relationship('Book', back_populates='reviews')
 
     def __repr__(self):
         return f'<Review {self.rating} stars for Book {self.book_id} by User {self.user_id}>'

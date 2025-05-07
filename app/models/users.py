@@ -11,7 +11,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    reviews = db.relationship('Review', backref='user', cascade="all, delete-orphan")
+    reviews = db.relationship("Review", back_populates="user")
+
 
     def set_password(self, password):
         """Hash the password and store it in the database."""

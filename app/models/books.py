@@ -14,8 +14,10 @@ class Book(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     cover_url = db.Column(db.String(255), nullable=True)
 
+    average_rating = db.Column(db.Float, default=0.0)
+
     # Relationships
-    reviews = db.relationship('Review', backref='book', cascade="all, delete-orphan")
+    reviews = db.relationship('Review', back_populates='book', cascade="all, delete-orphan")
 
     def __repr__(self):
         return f'<Book {self.title} by {self.author}>'

@@ -2,7 +2,7 @@ from flask_restful import Resource
 from flask import request
 from app import db
 from app.models import Review, Book, User
-from app.utils import error_response, success_response
+from app.utils import error_response, success_response, update_average_rating
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 class ReviewListResource(Resource):
@@ -26,6 +26,7 @@ class ReviewListResource(Resource):
         )
         db.session.add(review)
         db.session.commit()
+        update_average_rating(book_id)
         return review.to_dict(), 201
 
 
@@ -41,6 +42,7 @@ class ReviewResource(Resource):
         review.rating = data.get("rating", review.rating)
         review.comment = data.get("comment", review.comment)
         db.session.commit()
+        update_average_rating(review.book_id)
         return review.to_dict()
 
     @jwt_required()
@@ -52,4 +54,5 @@ class ReviewResource(Resource):
 
         db.session.delete(review)
         db.session.commit()
+        update_average_rating(review.book_id)
         return {"message": "Review deleted"}

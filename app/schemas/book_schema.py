@@ -16,6 +16,7 @@ class BookSchema(ma.SQLAlchemyAutoSchema):
     cover_url = fields.Str()
     published_date = fields.Date()
     created_at = fields.DateTime(dump_only=True)
+    average_rating = fields.Float(dump_only=True)
 
 book_schema = BookSchema()
 book_list_schema = BookSchema(many=True)

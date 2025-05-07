@@ -1,11 +1,12 @@
 from flask_restful import Resource
 from flask import request
-from app.models import Book, User
+from app.models import Book, User, Review
 from app import db
 from app.schemas.book_schema import book_schema, book_list_schema
 from app.utils import success_response, error_response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.utils import error_response, success_response
+from sqlalchemy import func
 
 
 class BookListResource(Resource):
@@ -30,7 +31,17 @@ class BookListResource(Resource):
         paginated = query.paginate(page=page, per_page=per_page, error_out=False)
 
         return success_response({
-            "books": book_list_schema.dump(paginated.items),
+            "books": [
+                {
+                    **book.to_dict(),
+                    "average_rating": round(
+                        db.session.query(func.avg(Review.rating))
+                        .filter(Review.book_id == book.id)
+                        .scalar() or 0, 2
+                    )
+                }
+                for book in paginated.items
+            ],
             "total": paginated.total,
             "page": paginated.page,
             "pages": paginated.pages,
